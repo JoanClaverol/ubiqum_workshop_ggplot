@@ -1,0 +1,56 @@
+---
+title: "Ggplot workshop"
+author: "Joan Claverol - Data mentor"
+date: "03/10/2019"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Install libraries
+
+Firs thing we will have to install the library we will use. In that case would be ggplot:
+
+```{r libraries}
+require(ggplot2)
+```
+
+## 2. Load the data 
+
+Use rds function for that:
+
+```{r}
+data <- readRDS("../data/Blackwell_Hist_Sample.rds")
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+## 3. Create a scatter plot
+
+```{r}
+ggplot(data) +
+  geom_point(aes(amount, age, color = (ifelse(region == 4, "region 4","not region 4")))) +
+  scale_color_manual(values = c("red", "blue")) +
+  labs(title = "Whatever", subtitle = "And ever", caption = "Nanananan") +
+  theme(
+    legend.position = "top",
+    legend.title = element_blank(),
+    panel.background = element_rect(fill = "white", colour = "grey50")
+  )
+```
+
+
+```{r}
+ggplot(data) +
+  geom_bar(aes(x = items, fill = in.store), position = "dodge") +
+  coord_flip() +
+  facet_wrap(~region) +
+  theme_classic()
+```
+  
