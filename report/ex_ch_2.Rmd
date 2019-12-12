@@ -268,7 +268,7 @@ pivot_ex_1 %>%
   ggplot(aes(x = Tier, y = perc, fill = names)) +
     geom_col(position = "dodge", width = 0.7) +
     coord_flip() +
-    scale_y_continuous(labels = percent, position = "right") +
+    scale_y_continuous(labels = percent_format(accuracy = 1), position = "right") +
     scale_fill_manual(
       values = c("#6FB8FF", "dodgerblue4"), 
       labels = c("% ACCOUNTS","% REVENUE")
@@ -300,6 +300,7 @@ pivot_ex_1 %>%
   ggplot(aes(x = Tier, y = perc, fill = names)) +
     geom_col(position = "dodge", width = 0.7) +
     scale_y_continuous(labels = percent, position = "left") +
+    scale_y_continuous(labels = percent_format(accuracy = 1), position = "left") +
     scale_fill_manual(
       values = c("#6FB8FF", "dodgerblue4"), 
       labels = c("% ACCOUNTS","% REVENUE")
@@ -331,7 +332,7 @@ pivot_ex_1 %>%
     geom_col(position = "dodge", width = 0.7) +
     geom_point(position = "identity") +
     geom_line(aes(group = Tier)) +
-    scale_y_continuous(labels = percent, position = "left") +
+    scale_y_continuous(labels = percent_format(accuracy = 1), position = "left") +
     scale_fill_manual(
       values = c("#6FB8FF", "dodgerblue4"), 
       labels = c("% ACCOUNTS","% REVENUE")
@@ -362,7 +363,8 @@ pivot_ex_1 %>%
   ggplot(aes(x = Tier, y = perc, fill = names)) +
     geom_point(position = "identity") +
     geom_line(aes(group = Tier)) +
-    scale_y_continuous(labels = percent, position = "left") +
+    scale_y_continuous(labels = percent_format(accuracy = 1), position = "left") +
+
     scale_fill_manual(
       values = c("#6FB8FF", "dodgerblue4"), 
       labels = c("% ACCOUNTS","% REVENUE")
@@ -421,5 +423,73 @@ pivot_ex_1 %>%
       legend.title = element_blank(),
       plot.margin = unit(c(1, 4, 1, 1), "lines")
       ) 
+```
+
+### EXERCISE 2 Improve the table
+
+Let’s look at another table. The following shows the number of meals served each
+year as part of a corporate giving program. Spend a moment looking at the data.
+What is interesting about it?
+
+```{r}
+ex_2 <- read_excel("../data/storytelling_practice/chapter_2/2.2 EXERCISE.xlsx")
+
+# transform to year
+library(lubridate)
+# ex_2 %>% 
+#   mutate(`Campaign Year` = ymd(`Campaign Year`))
+```
+
+* In a table we can create a heat map to show how the meals served increase or decrease across the years
+
+But let's do a bar graph: 
+
+```{r}
+ex_2 %>% 
+  ggplot(aes(x = factor(`Campaign Year`), y = `Meals Served`)) + 
+    geom_col(fill = "dodgerblue4", width = 0.7) + 
+    theme_void() +
+    labs(title = "Meals served over time") +
+    xlab(label = "CAMPAIGN YEAR") +
+    ylab(label = "# OF MEALS SERVED") +
+    scale_y_continuous(labels = scales::number, 
+                       breaks = seq(0, max(ex_2$`Meals Served`),50000)) +
+    # scale_x_continuous(labels = scales::number_format(accuracy = 1, big.mark = "")) +
+    theme(
+      axis.title.x = element_text(hjust = 0), 
+      axis.title.y = element_text(hjust = 1), 
+      axis.text = element_text()
+    )
+    
+```
+
+Now a line chart: 
+
+```{r}
+ex_2 %>% 
+  ggplot(aes(x = `Campaign Year`, y = `Meals Served`)) + 
+    geom_line(color = "dodgerblue4") +
+    geom_point(aes(y = if_else(`Campaign Year` == min(`Campaign Year`) |
+                         `Campaign Year` == max(`Campaign Year`),
+                         `Meals Served`, NULL)), col = "dodgerblue4") +
+    geom_text(aes(label = if_else(`Campaign Year` == min(`Campaign Year`), 
+                                  number(`Meals Served`, big.mark = ","), NULL)),
+              vjust = 1.5, col = "dodgerblue4") +
+    geom_text(aes(label = if_else(`Campaign Year` == max(`Campaign Year`), 
+                                  number(`Meals Served`, big.mark = ","), NULL)),
+              vjust = -1, col = "dodgerblue4") +
+    theme_void() +
+    labs(title = "Meals served over time", 
+         subtitle = "# OF MEALS SERVED") +
+    xlab(label = "CAMPAIGN YEAR") +
+    ylim(0, max(ex_2$`Meals Served`)) +
+    scale_x_continuous(labels = as.character(ex_2$`Campaign Year`), 
+                       breaks = ex_2$`Campaign Year`) +
+    theme(
+      axis.title.x = element_text(hjust = 0),
+      axis.text.x = element_text(),
+      axis.title.y = element_blank(),
+      axis.text.y = element_blank()
+    )
 ```
 
