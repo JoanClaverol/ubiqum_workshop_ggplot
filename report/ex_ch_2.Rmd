@@ -328,9 +328,9 @@ Help the user to understand the difference between the different levels:
 
 ```{r}
 pivot_ex_1 %>%
-  ggplot(aes(x = Tier, y = perc, fill = names)) +
-    geom_col(position = "dodge", width = 0.7) +
-    geom_point(position = "identity") +
+  ggplot(aes(x = Tier, y = perc)) +
+    geom_col(aes(fill = names), position = "dodge", width = 0.7) +
+    geom_point(aes(group = names), position = position_dodge(width = 0.75), inherit.aes = TRUE) +
     geom_line(aes(group = Tier)) +
     scale_y_continuous(labels = percent_format(accuracy = 1), position = "left") +
     scale_fill_manual(
@@ -360,11 +360,10 @@ That would be the same than:
 
 ```{r}
 pivot_ex_1 %>%
-  ggplot(aes(x = Tier, y = perc, fill = names)) +
-    geom_point(position = "identity") +
+  ggplot(aes(x = Tier, y = perc)) +
+    geom_point(aes(group = names), position = "identity") +
     geom_line(aes(group = Tier)) +
     scale_y_continuous(labels = percent_format(accuracy = 1), position = "left") +
-
     scale_fill_manual(
       values = c("#6FB8FF", "dodgerblue4"), 
       labels = c("% ACCOUNTS","% REVENUE")
@@ -488,8 +487,183 @@ ex_2 %>%
     theme(
       axis.title.x = element_text(hjust = 0),
       axis.text.x = element_text(),
+      axis.line.x = element_line(),
       axis.title.y = element_blank(),
       axis.text.y = element_blank()
+    )
+```
+
+### EXERCISE 3
+
+```{r fig.width=4, fig.height=5}
+ex_3 <- read_excel("../data/storytelling_practice/chapter_2/2.3 EXERCISE.xlsx")
+
+# initial plot
+ex_3 %>% 
+  pivot_longer(cols = -DATE, names_to = "names", values_to = "values") %>%
+  ggplot(aes(x = DATE, y = values)) +
+    geom_col(aes(fill = names), position = "dodge", col = "black") +
+    coord_flip() +
+    geom_text(aes(group = names, label = number(values, big.mark = ".")), 
+              position = position_dodge(width = 1), inherit.aes = TRUE,
+              hjust = -0.1, size = 3.5) +
+    ylim(0, 57000) + 
+    labs(title = "Demand and capacity by Month") + 
+    theme_void() +
+    theme(
+      legend.position = "bottom", 
+      legend.title = element_blank(), 
+      axis.text.y = element_text(size = 10)
+    )
+```
+
+
+Bar chart to create plots: 
+
+```{r}
+# initial plot
+ex_3 %>% 
+  pivot_longer(cols = -DATE, names_to = "names", values_to = "values") %>%
+  ggplot(aes(x = DATE, y = values)) +
+    geom_col(aes(fill = names), position = "dodge") +
+    scale_fill_manual(values = used_colors) + 
+    scale_y_continuous(labels = number_format(big.mark = ".")) +
+    labs(title = "Demand and capacity by Month\n") + 
+    ylab("UNITS") + xlab("MONTH") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.title = element_text(colour = "gray"),
+      axis.text.y = element_text(size = 10),
+      axis.title.y = element_text(hjust = 1),
+      axis.text.x = element_text(angle = 45, size = 9),
+      axis.title.x = element_text(hjust = 0), 
+    )
+```
+
+Or a line chart: 
+
+```{r}
+# prepare teh data
+ex_3_ready <- ex_3 %>% 
+  pivot_longer(cols = -DATE, names_to = "names", values_to = "values")
+
+# plot the results
+ex_3_ready %>% 
+  ggplot(aes(x = DATE, y = values)) +
+    geom_line(aes(color = names, group = names)) +
+    geom_text(aes(label = if_else(
+      DATE == "2020-03" & names == "DEMAND", values, NULL)
+      ), 
+      col = used_colors[2], hjust = 0.5, vjust = -0.5) +
+    geom_text(aes(label = if_else(
+      DATE == "2020-03" & names == "CAPACITY", values, NULL)), 
+      col = used_colors[1], hjust = 0.5, vjust = 1.5) +
+    scale_color_manual(values = used_colors) + 
+    scale_y_continuous(labels = scales::number_format(big.mark = "."), 
+                       breaks = seq(0, max(ex_3_ready$values),5000), 
+                       limits = c(0, 55000)) +
+    labs(title = "Demand and capacity by Month\n") + 
+    ylab("UNITS") + xlab("MONTH") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.title = element_text(colour = "gray"),
+      axis.text.y = element_text(size = 10),
+      axis.title.y = element_text(hjust = 1),
+      axis.text.x = element_text(angle = 45, size = 9),
+      axis.title.x = element_text(hjust = 0), 
+    )
+```
+
+
+A bar chart to show the unmet demand: 
+
+```{r}
+ex_3 %>% 
+  mutate(UNMET_DEMAND = DEMAND - CAPACITY, 
+         DEMAND = NULL) %>% 
+  pivot_longer(cols = -DATE, names_to = "names", values_to = "values") %>%
+  ggplot(aes(x = DATE, y = values, 
+             fill = factor(names, levels = c("UNMET_DEMAND", "CAPACITY")))) +
+    geom_col(position = "stack") +
+    scale_fill_manual(values = used_colors) + 
+    scale_y_continuous(labels = number_format(big.mark = ".")) +
+    labs(title = "Demand and capacity by Month\n") + 
+    ylab("UNITS") + xlab("MONTH") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.title = element_text(colour = "gray"),
+      axis.text.y = element_text(size = 10),
+      axis.title.y = element_text(hjust = 1),
+      axis.text.x = element_text(angle = 45, size = 9),
+      axis.title.x = element_text(hjust = 0), 
+    )
+```
+
+Use points to show the same information: 
+
+```{r}
+ex_3_ready %>% 
+  ggplot(aes(x = DATE, y = values)) +
+    geom_line(aes(group = DATE), color = "gray") +
+    geom_point(aes(color = names, group = names)) +
+    geom_text(aes(label = if_else(
+      DATE == "2020-03" & names == "DEMAND", values, NULL)
+      ), 
+      col = used_colors[2], hjust = 0.5, vjust = -0.5) +
+    geom_text(aes(label = if_else(
+      DATE == "2020-03" & names == "CAPACITY", values, NULL)), 
+      col = used_colors[1], hjust = 0.5, vjust = 1.5) +
+    scale_color_manual(values = used_colors) + 
+    scale_y_continuous(labels = scales::number_format(big.mark = "."), 
+                       breaks = seq(0, max(ex_3_ready$values),5000), 
+                       limits = c(0, 55000)) +
+    labs(title = "Demand and capacity by Month\n") + 
+    ylab("UNITS") + xlab("MONTH") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.title = element_text(colour = "gray"),
+      axis.text.y = element_text(size = 10),
+      axis.title.y = element_text(hjust = 1),
+      axis.text.x = element_text(angle = 45, size = 9),
+      axis.title.x = element_text(hjust = 0), 
+    )
+```
+
+Or create a line plot with the unmet demand: 
+
+```{r}
+ex_3 %>% 
+  mutate(UNMET_DEMAND = DEMAND - CAPACITY, 
+         GROUP = "1") %>% 
+  # pivot_longer(cols = -DATE, names_to = "names", values_to = "values") %>%
+  ggplot(aes(x = DATE, y = UNMET_DEMAND)) +
+    geom_line(aes(group = GROUP), color = "dodgerblue4") +
+    geom_point(color = "dodgerblue4") +
+    scale_y_continuous(labels = number_format(big.mark = "."), breaks = seq(0, 30000, 5000)) +
+    labs(title = "Unmet demand by Month\n") + 
+    ylab("UNITS") + xlab("MONTH") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.title = element_text(colour = "gray"),
+      axis.text.y = element_text(size = 10),
+      axis.title.y = element_text(hjust = 1),
+      axis.text.x = element_text(angle = 45, size = 9),
+      axis.title.x = element_text(hjust = 0), 
     )
 ```
 
