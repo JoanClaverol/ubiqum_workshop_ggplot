@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = F, warning = F)
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F, fig.align = "center")
 # libraries
 if (require(pacman) == FALSE) {
   install.packages("pacman")
@@ -92,7 +92,7 @@ It should be a 100% on Accounts and Revenue (%). Something wrong.
 ```{r}
 final_table %>%
   mutate(
-    `% Accounts` = `% Accounts`,
+    `% Accounts` = percent(`% Accounts`, digits = 0),
     `Revenue ($M)` = dollar(`Revenue ($M)`),
     `% Revenue` = percent(`% Revenue`, digits = 0)
     ) %>% 
@@ -389,47 +389,35 @@ pivot_ex_1 %>%
 And we can transform that information to:
 
 ```{r}
-library(ggrepel)
+# define palette of colors 
+library(RColorBrewer)
+my_blues <- brewer.pal(n = 9, "Blues")[4:9]
 
 pivot_ex_1 %>% 
   # pivot_wider(names_from = names, values_from = perc) %>% 
-  ggplot(aes(x = names, y = perc, group = Tier)) +
+  ggplot(aes(x = names, y = perc, group = Tier, col = Tier)) +
     geom_point() + 
     geom_line() +
-    geom_text(
-      aes(
-        label = if_else(
+    geom_text(aes(label = if_else(
           names == "% Accounts", percent(perc, digits = 0), NULL
-          ),
-        hjust = 1.5)
-      ) +
-  geom_text(
-      aes(
-        label = if_else(
+          )), hjust = 1.5) +
+    geom_text(aes(label = if_else(
           names == "% Revenue", percent(perc, digits = 0), NULL
-          ),
-        hjust = -0.5)
-      ) +
-  geom_text(
-      aes(
-        label = if_else(
-          names == "% Revenue", Tier, NULL
-          ),
-        hjust = -5.5)
-      ) +
-    labs(
-      title = "% OF TOTAL ACCOUNTS vs. REVENUE\n"
-      ) +
+          )), hjust = -0.5) +
+    scale_color_manual(values = my_blues) +
+    scale_x_discrete(labels = c("% TOT.\nACCOUNTS", "% TOT.\nREVENUE")) +
+    labs(title = "% OF TOTAL ACCOUNTS vs. REVENUE\n") +
     theme_void() + 
     theme(
       plot.title = element_text(hjust = 0.5),
       axis.title.y = element_blank(), 
-      axis.text.y = element_blank(),,
+      axis.text.y = element_blank(),
       axis.title.x = element_blank(),
       axis.text.x = element_text(), 
       axis.line.x = element_blank(),
-      legend.position = "top", 
-      legend.justification = "left", 
+      legend.position = "right", 
+      legend.justification = "left",
+      legend.text = element_text(size = 12),
       legend.title = element_blank(),
       plot.margin = unit(c(1, 4, 1, 1), "lines")
       ) 
