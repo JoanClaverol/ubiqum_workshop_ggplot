@@ -261,7 +261,7 @@ pivot_ex_1 <- all_ex_1 %>%
   pivot_longer(cols = -Tier, names_to = "names", values_to = "perc") 
 
 # define the colors used on the plot
-used_colors <- c("#6FB8FF", "dodgerblue4")
+used_colors <- c("#6fc3ff", "dodgerblue4")
 
 # create the plot
 pivot_ex_1 %>%
@@ -334,7 +334,7 @@ pivot_ex_1 %>%
     geom_line(aes(group = Tier)) +
     scale_y_continuous(labels = percent_format(accuracy = 1), position = "left") +
     scale_fill_manual(
-      values = c("#6FB8FF", "dodgerblue4"), 
+      values = c("#6fc3ff", "dodgerblue4"), 
       labels = c("% ACCOUNTS","% REVENUE")
       ) +
     labs(
@@ -493,15 +493,36 @@ ex_2 %>%
     )
 ```
 
-### EXERCISE 3
+### EXERCISE 3 & 4
 
 ```{r fig.width=4, fig.height=5}
 ex_3 <- read_excel("../data/storytelling_practice/chapter_2/2.3 EXERCISE.xlsx")
 
-# initial plot
-ex_3 %>% 
-  pivot_longer(cols = -DATE, names_to = "names", values_to = "values") %>%
-  ggplot(aes(x = DATE, y = values)) +
+# format to the data
+library(lubridate)
+library(magrittr)
+ex_3 %<>% 
+  mutate(DATE = parse_date_time(DATE, "%Y-%m"), 
+         YEAR = year(DATE), 
+         MONTH = factor(
+           str_to_upper(month(DATE, label = F)),
+           levels = seq(1,12,1),
+           labels = c("JAN","FEB","MAR","APR","MAY","JUN","JUL",
+                      "AUG","SEP","OCT","NOV","DEC")),
+         UNMET_DEMAND = DEMAND - CAPACITY
+         ) %>% 
+  arrange(desc(YEAR, MONTH)) 
+
+# prepare the data
+ex_3_2019 <- ex_3 %>% 
+  filter(YEAR == 2019) %>% 
+  select(-DATE, -YEAR) %>% 
+  pivot_longer(cols = -MONTH, names_to = "names", values_to = "values") 
+
+# plot the data
+ex_3_2019 %>% 
+  filter(names != "UNMET_DEMAND") %>% 
+  ggplot(aes(x = MONTH, y = values)) +
     geom_col(aes(fill = names), position = "dodge", col = "black") +
     coord_flip() +
     geom_text(aes(group = names, label = number(values, big.mark = ".")), 
@@ -522,88 +543,117 @@ Bar chart to create plots:
 
 ```{r}
 # initial plot
-ex_3 %>% 
-  pivot_longer(cols = -DATE, names_to = "names", values_to = "values") %>%
-  ggplot(aes(x = DATE, y = values)) +
-    geom_col(aes(fill = names), position = "dodge") +
+ex_3_2019 %>% 
+  filter(names != "UNMET_DEMAND") %>% 
+  ggplot(aes(x = MONTH, y = values)) +
+    geom_col(aes(fill = factor(names, levels = c("DEMAND","CAPACITY"))), 
+             position = "dodge", color = "dodgerblue4") +
     scale_fill_manual(values = used_colors) + 
     scale_y_continuous(labels = number_format(big.mark = ".")) +
     labs(title = "Demand and capacity by Month\n") + 
-    ylab("UNITS") + xlab("MONTH") +
+    ylab("NUMBER OF PROJECT HOURS") + xlab("2019") +
     theme_void() +
     theme(
       legend.position = "top",
       legend.justification = "left",
       legend.title = element_blank(), 
-      axis.title = element_text(colour = "gray"),
-      axis.text.y = element_text(size = 10),
+      axis.title = element_text(colour = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
       axis.title.y = element_text(hjust = 1),
-      axis.text.x = element_text(angle = 45, size = 9),
+      axis.text.x = element_text(size = 9, color = "gray58"),
       axis.title.x = element_text(hjust = 0), 
     )
+
 ```
 
 Or a line chart: 
 
 ```{r}
-# prepare teh data
-ex_3_ready <- ex_3 %>% 
-  pivot_longer(cols = -DATE, names_to = "names", values_to = "values")
-
 # plot the results
-ex_3_ready %>% 
-  ggplot(aes(x = DATE, y = values)) +
+ex_3_2019 %>% 
+  filter(names != "UNMET_DEMAND") %>% 
+  ggplot(aes(x = MONTH, y = values)) +
     geom_line(aes(color = names, group = names)) +
     geom_text(aes(label = if_else(
-      DATE == "2020-03" & names == "DEMAND", values, NULL)
+      MONTH == "DEC" & names == "DEMAND", 
+      number(round(values/1000), suffix = "K DEMAND"), NULL)
       ), 
-      col = used_colors[2], hjust = 0.5, vjust = -0.5) +
+      col = used_colors[2], hjust = 0.6, vjust = 1.5) +
     geom_text(aes(label = if_else(
-      DATE == "2020-03" & names == "CAPACITY", values, NULL)), 
-      col = used_colors[1], hjust = 0.5, vjust = 1.5) +
+      MONTH == "DEC" & names == "CAPACITY", 
+      number(round(values/1000), suffix = "K CAPACITY"), NULL)), 
+      col = used_colors[1], hjust = 0.6, vjust = -0.75) +
     scale_color_manual(values = used_colors) + 
     scale_y_continuous(labels = scales::number_format(big.mark = "."), 
-                       breaks = seq(0, max(ex_3_ready$values),5000), 
+                       breaks = seq(0, max(ex_3_2019$values),10000), 
                        limits = c(0, 55000)) +
     labs(title = "Demand and capacity by Month\n") + 
-    ylab("UNITS") + xlab("MONTH") +
+    ylab("NUMBER OF PROJECT HOURS") + xlab("2019") +
+    theme_void() +
+    theme(
+      legend.position = "none",
+      axis.title = element_text(colour = "gray58"),
+      axis.line = element_line(color = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
+      axis.title.y = element_text(hjust = 1),
+      axis.text.x = element_text(size = 9, color = "gray58"),
+      axis.title.x = element_text(hjust = 0), 
+    )
+```
+
+A Bar chart with alpha: 
+
+```{r}
+ex_3_2019 %>%
+  filter(names != "UNMET_DEMAND") %>%
+  pivot_wider(names_from = "names", values_from = "values") %>% 
+  ggplot(aes(x = MONTH)) +
+    geom_col(aes(y = DEMAND), 
+             color = "dodgerblue4", fill = "white", width = 0.4) +
+    geom_col(aes(y = CAPACITY), fill = "dodgerblue4", alpha = 0.4, width = 0.7) +
+    scale_fill_manual(values = used_colors) + 
+    scale_y_continuous(labels = number_format(big.mark = ".")) +
+    labs(title = "Demand and capacity by Month", 
+         subtitle = "Demand vs. capacity month by month\n") + 
+    ylab("NUMBER OF PROJECT HOURS") + xlab("MONTH") +
     theme_void() +
     theme(
       legend.position = "top",
       legend.justification = "left",
       legend.title = element_blank(), 
-      axis.title = element_text(colour = "gray"),
-      axis.text.y = element_text(size = 10),
+      axis.title = element_text(colour = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
       axis.title.y = element_text(hjust = 1),
-      axis.text.x = element_text(angle = 45, size = 9),
+      axis.text.x = element_text(size = 9, color = "gray58"),
       axis.title.x = element_text(hjust = 0), 
     )
+
 ```
 
 
 A bar chart to show the unmet demand: 
 
 ```{r}
-ex_3 %>% 
-  mutate(UNMET_DEMAND = DEMAND - CAPACITY, 
-         DEMAND = NULL) %>% 
-  pivot_longer(cols = -DATE, names_to = "names", values_to = "values") %>%
-  ggplot(aes(x = DATE, y = values, 
+ex_3_2019 %>%
+  filter(names != "DEMAND") %>% 
+  ggplot(aes(x = MONTH, y = values, 
              fill = factor(names, levels = c("UNMET_DEMAND", "CAPACITY")))) +
-    geom_col(position = "stack") +
-    scale_fill_manual(values = used_colors) + 
-    scale_y_continuous(labels = number_format(big.mark = ".")) +
-    labs(title = "Demand and capacity by Month\n") + 
-    ylab("UNITS") + xlab("MONTH") +
+    geom_col(position = "stack", color = "dodgerblue4") +
+    scale_fill_manual(values = c(used_colors[2], used_colors[1])) + 
+    scale_y_continuous(labels = number_format(big.mark = "."), 
+                       limits = c(0, 60000), 
+                       breaks = seq(0, 60000, 10000)) +
+    labs(title = "Demand vs. capacity over 2019\n") + 
+    ylab("NUMBER OF PROJECT HOURS") + xlab("MONTH") +
     theme_void() +
     theme(
       legend.position = "top",
       legend.justification = "left",
       legend.title = element_blank(), 
-      axis.title = element_text(colour = "gray"),
-      axis.text.y = element_text(size = 10),
+      axis.title = element_text(colour = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
       axis.title.y = element_text(hjust = 1),
-      axis.text.x = element_text(angle = 45, size = 9),
+      axis.text.x = element_text(size = 9, color = "gray58"),
       axis.title.x = element_text(hjust = 0), 
     )
 ```
@@ -611,59 +661,151 @@ ex_3 %>%
 Use points to show the same information: 
 
 ```{r}
-ex_3_ready %>% 
-  ggplot(aes(x = DATE, y = values)) +
-    geom_line(aes(group = DATE), color = "gray") +
-    geom_point(aes(color = names, group = names)) +
-    geom_text(aes(label = if_else(
-      DATE == "2020-03" & names == "DEMAND", values, NULL)
-      ), 
-      col = used_colors[2], hjust = 0.5, vjust = -0.5) +
-    geom_text(aes(label = if_else(
-      DATE == "2020-03" & names == "CAPACITY", values, NULL)), 
-      col = used_colors[1], hjust = 0.5, vjust = 1.5) +
+ex_3_2019 %>% 
+  filter(names != "UNMET_DEMAND") %>% 
+  ggplot(aes(x = MONTH, y = values)) +
+    geom_line(aes(group = MONTH), size = 10, color = "gray58") +
+    geom_point(aes(color = names, group = names), size = 10, shape = 21, fill = "white") + 
+    geom_text(aes(label = round(values/1000), color = names)) +
+  
+    # geom_text(aes(label = if_else(
+    #   MONTH == "2020-03" & names == "DEMAND", values, NULL)
+    #   ), 
+    #   col = used_colors[2], hjust = 0.5, vjust = -0.5) +
+    # geom_text(aes(label = if_else(
+    #   MONTH == "2020-03" & names == "CAPACITY", values, NULL)), 
+    #   col = used_colors[1], hjust = 0.5, vjust = 1.5) +
     scale_color_manual(values = used_colors) + 
     scale_y_continuous(labels = scales::number_format(big.mark = "."), 
-                       breaks = seq(0, max(ex_3_ready$values),5000), 
+                       breaks = seq(0, max(ex_3_2019$values),5000), 
                        limits = c(0, 55000)) +
-    labs(title = "Demand and capacity by Month\n") + 
-    ylab("UNITS") + xlab("MONTH") +
+    labs(title = "Demand vs. capacity over 2019\n") + 
+    ylab("NUMBER OF PROJECT HOURS (THOUSANDS)") + xlab("2019") +
     theme_void() +
     theme(
       legend.position = "top",
       legend.justification = "left",
       legend.title = element_blank(), 
-      axis.title = element_text(colour = "gray"),
-      axis.text.y = element_text(size = 10),
+      axis.title = element_text(colour = "gray58"),
       axis.title.y = element_text(hjust = 1),
-      axis.text.x = element_text(angle = 45, size = 9),
-      axis.title.x = element_text(hjust = 0), 
+      axis.text.x = element_text(size = 9, color = "gray58"),
+      axis.title.x = element_text(hjust = 0, color = "gray58"), 
+      axis.line.x = element_line(color = "gray58")
     )
 ```
 
 Or create a line plot with the unmet demand: 
 
 ```{r}
-ex_3 %>% 
-  mutate(UNMET_DEMAND = DEMAND - CAPACITY, 
-         GROUP = "1") %>% 
-  # pivot_longer(cols = -DATE, names_to = "names", values_to = "values") %>%
-  ggplot(aes(x = DATE, y = UNMET_DEMAND)) +
+ex_3_2019 %>% 
+  filter(names == "UNMET_DEMAND") %>% 
+  mutate(GROUP = "1") %>% 
+  ggplot(aes(x = MONTH, y = values)) +
     geom_line(aes(group = GROUP), color = "dodgerblue4") +
     geom_point(color = "dodgerblue4") +
-    scale_y_continuous(labels = number_format(big.mark = "."), breaks = seq(0, 30000, 5000)) +
-    labs(title = "Unmet demand by Month\n") + 
-    ylab("UNITS") + xlab("MONTH") +
+    scale_y_continuous(labels = number_format(big.mark = "."), 
+                       breaks = seq(0, 30000, 5000), 
+                       limits = c(0, 30000)) +
+    labs(title = "Unmet demand over 2019\n") + 
+    ylab("NUMBER OF PROJECT HOURS") + xlab("2019") +
     theme_void() +
     theme(
       legend.position = "top",
       legend.justification = "left",
       legend.title = element_blank(), 
-      axis.title = element_text(colour = "gray"),
-      axis.text.y = element_text(size = 10),
+      axis.line = element_line(color = "gray58"),
+      axis.title = element_text(colour = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
       axis.title.y = element_text(hjust = 1),
-      axis.text.x = element_text(angle = 45, size = 9),
+      axis.text.x = element_text(size = 9, color = "gray58"),
       axis.title.x = element_text(hjust = 0), 
     )
+```
+
+### EXERCISE 5
+
+The following table shows attrition rate for a 1-year associate training program for
+a given company. Spend a moment familiarizing yourself with it, then answer the
+following questions.
+
+```{r}
+ex_5 <- read_excel("../data/storytelling_practice/chapter_2/2.5 EXERCISE.xlsx")
+```
+
+Define average value and filter it our from the data: 
+
+```{r}
+# filter out average
+ex_5_raw <- ex_5 %>% 
+  filter(Year != "AVG")
+
+# select average
+ex_5_avg <- ex_5 %>% 
+  filter(Year == "AVG")
+
+# define colo 
+col <- "dodgerblue4"
+# scatter plot
+ex_5_raw %>% 
+  ggplot(aes(x = Year, y = `Attrition Rate`)) +
+    geom_point(color = col, size = 3) +
+    geom_hline(yintercept =  ex_5_avg$`Attrition Rate`, linetype = "dashed", 
+               col = col) +
+    annotate(geom = "text", x = 1.5, y = ex_5_avg$`Attrition Rate` + 0.005, 
+             label = paste("AVERAGE: ", round(ex_5_avg$`Attrition Rate`*100, 1),
+                           "%"), 
+             col = col) +
+    scale_y_continuous(labels = percent_format(accuracy = 1), 
+                       breaks = seq(0,0.18,0.02), 
+                       limits = c(0,0.16)) + 
+    labs(title = "Attrition rate over time\n") +
+    ylab("ATTRITION RATE") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.line = element_line(color = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
+      axis.title.y = element_text(hjust = 1, color = "gray58"),
+      axis.text.x = element_text(size = 9, color = "gray58")    
+      )
+```
+
+Use a line graph to show the evolution over time: 
+
+```{r}
+ex_5_raw %>% 
+  mutate(GROUP = "1") %>% 
+  ggplot(aes(x = Year, y = `Attrition Rate`)) +
+    geom_line(aes(group = GROUP), color = col, size = 1) +
+    geom_point(aes(y = if_else(Year == "2019", `Attrition Rate`, NULL)), 
+               col = col, size = 3) +
+    geom_hline(yintercept =  ex_5_avg$`Attrition Rate`, linetype = "dashed", 
+               col = col) +
+    geom_text(aes(label = if_else(Year == "2019", 
+                                  paste(round(`Attrition Rate`*100,1),"%"),
+                                  NULL)), 
+              col = col, vjust = -1, hjust = 0.25) +
+    annotate(geom = "text", x = 9.5, y = ex_5_avg$`Attrition Rate` - 0.005, 
+             label = paste("AVG: ", round(ex_5_avg$`Attrition Rate`*100, 1),
+                           "%"), 
+             col = col) +
+    scale_y_continuous(labels = percent_format(accuracy = 1), 
+                       breaks = seq(0,0.18,0.02), 
+                       limits = c(0,0.16)) + 
+    labs(title = "Attrition rate over time\n") +
+    ylab("ATTRITION RATE") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.line = element_line(color = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
+      axis.title.y = element_text(hjust = 1, color = "gray58"),
+      axis.text.x = element_text(size = 9, color = "gray58")    
+      )
+
 ```
 
