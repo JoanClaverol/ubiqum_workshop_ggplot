@@ -296,18 +296,22 @@ pivot_ex_1 %>%
 We can flip that chart: 
 
 ```{r}
+library(grid)
+
 pivot_ex_1 %>%
   ggplot(aes(x = Tier, y = perc, fill = names)) +
     geom_col(position = "dodge", width = 0.7) +
-    scale_y_continuous(labels = percent, position = "left") +
-    scale_y_continuous(labels = percent_format(accuracy = 1), position = "left") +
+    scale_y_continuous(labels = percent_format(accuracy = 1),
+                       position = "left", 
+                       breaks = seq(0, 0.40, 0.1), 
+                       limits = c(0, 0.45)) +
     scale_fill_manual(
       values = c("#6FB8FF", "dodgerblue4"), 
       labels = c("% ACCOUNTS","% REVENUE")
       ) +
-    labs(
-      title = "% OF TOTAL ACCOUNTS vs. REVENUE\n"
-      ) +
+    # labs(
+    #   title = "% OF TOTAL ACCOUNTS vs. REVENUE\n"
+    #   ) +
     theme_void() + 
     theme(
       plot.title = element_text(hjust = 0.5),
@@ -317,11 +321,30 @@ pivot_ex_1 %>%
       axis.title.x = element_blank(),
       axis.text.x = element_text(), 
       axis.line.x = element_blank(),
-      legend.position = "top", 
-      legend.justification = "left", 
-      legend.title = element_blank(),
+      legend.position = "none",
       plot.margin = unit(c(1, 4, 1, 1), "lines")
-      ) 
+      ) +
+    annotation_custom(textGrob(
+      expression('%  OF TOTAL '),
+      gp = gpar(col = 'black', fontsize = 13), just = "left"
+      ),
+      xmin = 0, xmax = 1, ymin = 0.45) +
+    annotation_custom(textGrob(
+      expression(phantom('%  OF TOTAL ') * bold("ACCOUNTS ")),
+      gp = gpar(col = used_colors[1], fontsize = 13), just = "left"
+      ),
+      xmin = 0, xmax = 1, ymin = 0.45) +
+    annotation_custom(textGrob(
+      expression(phantom("%  OF TOTAL") * phantom(bold("ACCOUNTS ")) * 
+                   " vs. "),
+      gp = gpar(col = "black", fontsize = 13), just = "left"
+      ),
+      xmin = 0, xmax = 1, ymin = 0.45) +
+    annotation_custom(textGrob(
+      expression(phantom("%  OF TOTAL ACCOUNTS vs. ") * bold(" REVENUE")),
+      gp = gpar(col = used_colors[2], fontsize = 13), just = "left"
+      ),
+      xmin = 0, xmax = 1, ymin = 0.45) 
 ```
 
 Help the user to understand the difference between the different levels:
@@ -390,23 +413,30 @@ pivot_ex_1 %>%
 And we can transform that information to:
 
 ```{r}
-# define palette of colors 
-library(RColorBrewer)
-my_blues <- brewer.pal(n = 9, "Blues")[4:9]
+# filter the percentages to plot
+ex_1_revenue <- pivot_ex_1 %>% 
+  filter(names == "% Revenue")
+ex_1_accounts <- pivot_ex_1 %>% 
+  filter(names == "% Accounts")
+
+# # define palette of colors 
+# library(RColorBrewer)
+# my_blues <- brewer.pal(n = 9, "Blues")[4:9]
 
 pivot_ex_1 %>% 
   # pivot_wider(names_from = names, values_from = perc) %>% 
-  ggplot(aes(x = names, y = perc, group = Tier, col = Tier)) +
+  ggplot(aes(x = names, y = perc, group = Tier)) + #, col = Tier
     geom_point() + 
     geom_line() +
-    geom_text(aes(label = if_else(
-          names == "% Accounts", percent(perc, digits = 0), NULL
-          )), hjust = 1.5) +
-    geom_text(aes(label = if_else(
-          names == "% Revenue", percent(perc, digits = 0), NULL
-          )), hjust = -0.5) +
-    scale_color_manual(values = my_blues) +
-    scale_x_discrete(labels = c("% TOT.\nACCOUNTS", "% TOT.\nREVENUE")) +
+    annotate("text", x = 0.95, y = ex_1_accounts$perc,
+             label = percent(ex_1_accounts$perc, digits = 0), hjust = 1)+
+    annotate("text", x = 2.05, y = ex_1_revenue$perc,
+             label = percent(ex_1_revenue$perc, digits = 0), hjust = 0) + 
+    annotate("text", x = 2.25, y = ex_1_revenue$perc,
+             label = ex_1_revenue$Tier, hjust = 0) +
+    scale_x_discrete(
+      labels = c("% TOT.\nACCOUNTS", "% TOT.\nREVENUE")
+      ) +
     labs(title = "% OF TOTAL ACCOUNTS vs. REVENUE\n") +
     theme_void() + 
     theme(
@@ -787,10 +817,10 @@ ex_5_raw %>%
                                   paste(round(`Attrition Rate`*100,1),"%"),
                                   NULL)), 
               col = col, vjust = -1, hjust = 0.25) +
-    annotate(geom = "text", x = 9.5, y = ex_5_avg$`Attrition Rate` - 0.005, 
+    annotate(geom = "text", x = 10, y = ex_5_avg$`Attrition Rate` - 0.005, 
              label = paste("AVG: ", round(ex_5_avg$`Attrition Rate`*100, 1),
                            "%"), 
-             col = col) +
+             col = col, hjust = 0.65) +
     scale_y_continuous(labels = percent_format(accuracy = 1), 
                        breaks = seq(0,0.18,0.02), 
                        limits = c(0,0.16)) + 
@@ -806,6 +836,200 @@ ex_5_raw %>%
       axis.title.y = element_text(hjust = 1, color = "gray58"),
       axis.text.x = element_text(size = 9, color = "gray58")    
       )
+```
 
+Another approach would be to add area below the horizontal line:
+
+```{r}
+ex_5_raw %>% 
+  mutate(GROUP = "1") %>% 
+  ggplot(aes(x = Year, y = `Attrition Rate`)) +
+    geom_line(aes(group = GROUP), color = col, size = 1) +
+    geom_point(aes(y = if_else(Year == "2019", `Attrition Rate`, NULL)), 
+               col = col, size = 3) +
+    # geom_hline(yintercept =  ex_5_avg$`Attrition Rate`, linetype = "dashed", 
+    #            col = col) +
+    geom_text(aes(label = if_else(Year == "2019", 
+                                  paste(round(`Attrition Rate`*100,1),"%"),
+                                  NULL)), 
+              col = col, vjust = -1, hjust = 0.25) +
+    annotate(geom = "text", x = 10, y = ex_5_avg$`Attrition Rate` - 0.005, 
+             label = paste("AVG: ", round(ex_5_avg$`Attrition Rate`*100, 1),
+                           "%"), 
+             col = col, hjust = 0.65) +
+    annotate(geom = "rect", xmin = 1, xmax = 10.75,
+             ymin = 0, ymax = ex_5_avg$`Attrition Rate`, alpha = 0.3, 
+             fill = col) +
+    scale_y_continuous(labels = percent_format(accuracy = 1), 
+                       breaks = seq(0,0.18,0.02), 
+                       limits = c(0,0.16)) + 
+    labs(title = "Attrition rate over time\n") +
+    ylab("ATTRITION RATE") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.line = element_line(color = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
+      axis.title.y = element_text(hjust = 1, color = "gray58"),
+      axis.text.x = element_text(size = 9, color = "gray58")    
+      )
+```
+
+We can directly use an area graph: 
+
+```{r}
+ex_5_raw %>% 
+  mutate(GROUP = "1") %>% 
+  ggplot(aes(x = Year, y = `Attrition Rate`)) +
+    geom_area(aes(group = GROUP), fill = col, size = 1) +
+    geom_hline(yintercept =  ex_5_avg$`Attrition Rate`, linetype = "dashed", 
+               col = "#5783AD") +
+    annotate(geom = "text", x = 10, y = ex_5_avg$`Attrition Rate` - 0.005, 
+             label = paste("AVG.\n", round(ex_5_avg$`Attrition Rate`*100, 1),
+                           "%"), 
+             col = "#93AFCA", hjust = 1, vjust = 0.1) +
+    scale_y_continuous(labels = percent_format(accuracy = 1), 
+                       breaks = seq(0,0.18,0.02), 
+                       limits = c(0,0.16)) + 
+    labs(title = "Attrition rate over time\n") +
+    ylab("ATTRITION RATE") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.line = element_line(color = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
+      axis.title.y = element_text(hjust = 1, color = "gray58"),
+      axis.text.x = element_text(size = 9, color = "gray58")    
+      )
+```
+
+Transform to a data graph:
+
+```{r}
+ex_5_raw %>% 
+  mutate(GROUP = "1") %>% 
+  ggplot(aes(x = Year, y = `Attrition Rate`)) +
+    geom_col(fill = "#275F96", width = 0.7) +
+    geom_hline(yintercept =  ex_5_avg$`Attrition Rate`, linetype = "dashed", 
+               col = col) +
+    annotate(geom = "text", x = 2, y = ex_5_avg$`Attrition Rate` + 0.005, 
+             label = paste("AVG: ", round(ex_5_avg$`Attrition Rate`*100, 1),
+                           "%"), 
+             col = col, hjust = 0.25) +
+    scale_y_continuous(labels = percent_format(accuracy = 1), 
+                       breaks = seq(0,0.18,0.02), 
+                       limits = c(0,0.16)) + 
+    labs(title = "Attrition rate over time\n") +
+    ylab("ATTRITION RATE") +
+    theme_void() +
+    theme(
+      legend.position = "top",
+      legend.justification = "left",
+      legend.title = element_blank(), 
+      axis.line = element_line(color = "gray58"),
+      axis.text.y = element_text(size = 10, color = "gray58"),
+      axis.title.y = element_text(hjust = 1, color = "gray58"),
+      axis.text.x = element_text(size = 9, color = "gray58")    
+      )
+```
+
+
+### EXERCISE 7
+
+peaking of points (mentioned in the solution to the previous exercise), let’s take
+a look at some next, in the context of critiquing a less than ideal graph.
+
+![](../documentation/bankIndex.png)
+
+How to transform to a more clear chart: 
+
+```{r}
+ex_7 <- read_excel("../data/storytelling_practice/chapter_2/2.7 EXERCISE.xlsx")
+
+# pivot the data and get finance and banking data
+ex_7_pivot <- ex_7 %>% 
+  rename(name_1 = ...1) %>% 
+  pivot_longer(cols = -name_1, names_to = "year", values_to = "values") %>% 
+  mutate(year = as.integer(year))
+# ex_7_finance <- filter(.data = ex_7_pivot, name_1 == "Financial Savings")
+# ex_7_pivot <- filter(.data = ex_7_pivot, name_1 == "")
+```
+
+Now create a line plot:
+
+```{r}
+# prepare the titles 
+y <- 910
+x <- 0.5
+library(grid)
+title_finance <- textGrob(
+  expression(bold("Financial Savings") * phantom("below") *
+               phantom(bold("industry")) * 
+               phantom("for first time in 5 years\n")),
+  x = x, y = y, gp = gpar(col = col))
+
+title_industry <- textGrob(
+  expression(phantom("Financial Savings") * "below" * 
+               phantom(bold("industry")) * "for first time in 5 years\n"),
+  x = x, y = y, gp = gpar(col = "black"))
+    
+title <- textGrob(
+  expression("Financial Savings" * phantom("below") * bold("industry") * 
+               phantom("for first time in 5 years\n")),
+  x = x, y = y, gp = gpar(col = "black"))
+
+
+# line plot
+ex_7_pivot %>% 
+  filter(name_1 %in% c("Financial Savings", "Industry Average")) %>% 
+  ggplot(aes(x = year, y = values)) +
+    geom_line(aes(color = name_1, group = name_1), size = 1) +
+    geom_point(aes(y = if_else(year == 2019, values, NULL), col = name_1)) +
+    annotate("text", x = 2019, y = 840, label = "Industry avg",
+             color = "black", hjust = -0.1, vjust = -1.1, size = 4) +
+    annotate("text", x = 2019, y = 830, label = "Financial\nSavings",
+             color = col, hjust = -0.15, vjust = 0.70, size = 4) +
+    scale_color_manual(values = c("dodgerblue4","black")) +
+    scale_y_continuous(breaks = seq(700, 900, 20), limits = c(700, 920)) +
+    scale_x_continuous(breaks = seq(2012, 2019, 1), 
+                       limits = c(2012, 2020)) +
+    xlab("SURVEY YEAR") + ylab("SATISFACTION SCORE") +
+    theme_void() +
+    theme(
+      title = element_text(size = 9, color = "gray58"),
+      axis.line.x = element_line(color = "gray58"),
+      axis.text.y = element_text(size = 9, color = "gray58"),
+      axis.title.y = element_text(size = 9, hjust = 1, color = "gray58"),
+      axis.text.x = element_text(size = 9, color = "gray58"),
+      axis.title.x = element_text(hjust = 0, color = "gray58", size = 9),
+      legend.position = "none"
+      ) +
+    annotation_custom(textGrob(
+      expression(bold('Financial Savings ')),
+      gp = gpar(col = 'dodgerblue4', fontsize = 13), just = "left"
+      ),
+      xmin = 2012, xmax = 2013, ymin = 920) +
+    annotation_custom(textGrob(
+      expression(phantom(bold('Financial Savings ')) * "below "),
+      gp = gpar(col = 'black', fontsize = 13), just = "left"
+      ),
+      xmin = 2012, xmax = 2013, ymin = 920) +
+    annotation_custom(textGrob(
+      expression(phantom(bold('Financial Savings ')) *
+                   phantom("below ") * bold("industry ")),
+      gp = gpar(col = 'black', fontsize = 13), just = "left"
+      ),
+      xmin = 2012, xmax = 2013, ymin = 920) +
+    annotation_custom(textGrob(
+      expression(phantom(bold('Financial Savings ')) *
+                   phantom("below ") * phantom(bold("industry ")) *
+                   "for first time in 5 years"),
+      gp = gpar(col = 'black', fontsize = 13), just = "left"
+      ),
+      xmin = 2012, xmax = 2013, ymin = 920) 
 ```
 
