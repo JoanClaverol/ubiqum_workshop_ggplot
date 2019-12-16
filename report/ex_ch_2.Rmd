@@ -1,14 +1,16 @@
 ---
 title: "Exercices chapter 2"
 author: "Joan Claverol Romero"
-date: "09/12/2019"
 output: 
   html_document:
     code_folding: hide
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = F, warning = F, fig.align = "center")
+knitr::opts_chunk$set(echo = TRUE, message = F, warning = F, 
+                      fig.align = "center", cache = T)
 # libraries
 if (require(pacman) == FALSE) {
   install.packages("pacman")
@@ -43,9 +45,7 @@ kable(ex_1 %>%
                 full_width = F)
 ```
 
-##### STEP 1: Review the data in Figure 2.1a. What observations can you make? Do you have to make any assumptions when interpreting this data? What questions do you have about this data?
-
-* We should add a *total*. Then we will realize some problems
+Add extra information into the table: 
 
 ```{r}
 # Find out the actual information
@@ -79,15 +79,7 @@ final_table <- ex_1 %>%
   arrange(Tier)
 ```
 
-It should be a 100% on Accounts and Revenue (%). Something wrong. 
-
-* Round % to only one digit. 
-* The number of accounts with a Tier C is the higher one. Is it clearly seen in the column *% Accounts*. 
-* The revenue is higher at Tier B, also weel represented on the *% Revenue*. 
-
-##### STEP 2:  Consider the layout of the table in Figure 2.1a. Let’s assume you’ve been told this information must be communicated in a table. Are there any changes you would make to the way the data is presented or the overall manner in which the table is designed?
-
-* I recommend against shading every other row and instead am an advocate for white space (and limited light borders) to set apart columns and rows as needed.
+Create an HTML table:
 
 ```{r}
 final_table %>%
@@ -118,26 +110,10 @@ final_table %>%
                 full_width = F)
 ```
 
-Try to apply a better format. but let's find out a better chart: 
 
-```{r eval=FALSE}
-final_table %>% 
-  filter(Tier != "Total") %>% 
-  mutate(`% Accounts` = color_bar("red")(`% Accounts`)) %>% 
-  # start to build the table
-  kable(escape = F) %>%
-  kable_styling("hover", full_width = F) %>%
-  column_spec(5, width = "3cm") %>%
-  add_header_above(c(" ", "Hello" = 2, "World" = 2))
-```
-
-##### Tranform the data to pie charts
-
-Improve the next chart: 
+Create the pie chart similar to this one: 
 
 ![](../documentation/2_2_PieChart.png)
-
-Create the pie chart: 
 
 ```{r}
 # add other in the data
@@ -205,7 +181,7 @@ grid.arrange(pie_accounts, pie_revenue, nrow = 1)
 
 Other ways to improve a pie chart in this stackOverflow [link](https://stackoverflow.com/questions/16184188/ggplot-facet-piechart-placing-text-in-the-middle-of-pie-chart-slices/47645727)
 
-But the best wat to represent that information would be: 
+Bar chart to improve the visualization: 
 
 ```{r, fig.width=8}
 # coord plots for accounts
@@ -251,7 +227,7 @@ bar_revenue <- all_ex_1 %>%
 grid.arrange(bar_accounts, bar_revenue, nrow = 1)
 ```
 
-Last step to improve the chart: 
+Bar chart improvment: 
 
 ```{r}
 # create teh table
@@ -293,7 +269,7 @@ pivot_ex_1 %>%
 
 ```
 
-We can flip that chart: 
+Flip the chart: 
 
 ```{r}
 library(grid)
@@ -309,15 +285,11 @@ pivot_ex_1 %>%
       values = c("#6FB8FF", "dodgerblue4"), 
       labels = c("% ACCOUNTS","% REVENUE")
       ) +
-    # labs(
-    #   title = "% OF TOTAL ACCOUNTS vs. REVENUE\n"
-    #   ) +
     theme_void() + 
     theme(
       plot.title = element_text(hjust = 0.5),
       axis.title.y = element_blank(), 
-      axis.text.y = element_text(face = "bold", size = 12),
-      axis.line.y = element_line(size = 0.5),
+      axis.text.y = element_text(face = "bold", size = 10),
       axis.title.x = element_blank(),
       axis.text.x = element_text(), 
       axis.line.x = element_blank(),
@@ -410,7 +382,7 @@ pivot_ex_1 %>%
       ) 
 ```
 
-And we can transform that information to:
+Create a slope graph based on the previous transformations: 
 
 ```{r}
 # filter the percentages to plot
@@ -456,9 +428,7 @@ pivot_ex_1 %>%
 
 ### EXERCISE 2 Improve the table
 
-Let’s look at another table. The following shows the number of meals served each
-year as part of a corporate giving program. Spend a moment looking at the data.
-What is interesting about it?
+Load the data: 
 
 ```{r}
 ex_2 <- read_excel("../data/storytelling_practice/chapter_2/2.2 EXERCISE.xlsx")
@@ -469,9 +439,7 @@ library(lubridate)
 #   mutate(`Campaign Year` = ymd(`Campaign Year`))
 ```
 
-* In a table we can create a heat map to show how the meals served increase or decrease across the years
-
-But let's do a bar graph: 
+Let's do a bar graph: 
 
 ```{r}
 ex_2 %>% 
@@ -568,8 +536,7 @@ ex_3_2019 %>%
     )
 ```
 
-
-Bar chart to create plots: 
+Bar chart: 
 
 ```{r}
 # initial plot
@@ -631,7 +598,7 @@ ex_3_2019 %>%
     )
 ```
 
-A Bar chart with alpha: 
+A bar chart with alpha parameter: 
 
 ```{r}
 ex_3_2019 %>%
@@ -659,7 +626,6 @@ ex_3_2019 %>%
     )
 
 ```
-
 
 A bar chart to show the unmet demand: 
 
@@ -754,9 +720,7 @@ ex_3_2019 %>%
 
 ### EXERCISE 5
 
-The following table shows attrition rate for a 1-year associate training program for
-a given company. Spend a moment familiarizing yourself with it, then answer the
-following questions.
+The following table shows attrition rate for a 1-year associate training program for a given company. Spend a moment familiarizing yourself with it, then answer the following questions.
 
 ```{r}
 ex_5 <- read_excel("../data/storytelling_practice/chapter_2/2.5 EXERCISE.xlsx")
@@ -877,7 +841,7 @@ ex_5_raw %>%
       )
 ```
 
-We can directly use an area graph: 
+Area graph: 
 
 ```{r}
 ex_5_raw %>% 
@@ -907,7 +871,7 @@ ex_5_raw %>%
       )
 ```
 
-Transform to a data graph:
+Bar chart:
 
 ```{r}
 ex_5_raw %>% 
@@ -940,12 +904,11 @@ ex_5_raw %>%
 
 ### EXERCISE 7
 
-peaking of points (mentioned in the solution to the previous exercise), let’s take
-a look at some next, in the context of critiquing a less than ideal graph.
+Original graph: 
 
 ![](../documentation/bankIndex.png)
 
-How to transform to a more clear chart: 
+How to transform it to a better chart: 
 
 ```{r}
 ex_7 <- read_excel("../data/storytelling_practice/chapter_2/2.7 EXERCISE.xlsx")
@@ -987,17 +950,22 @@ title <- textGrob(
 ex_7_pivot %>% 
   filter(name_1 %in% c("Financial Savings", "Industry Average")) %>% 
   ggplot(aes(x = year, y = values)) +
+    # gometries
     geom_line(aes(color = name_1, group = name_1), size = 1) +
     geom_point(aes(y = if_else(year == 2019, values, NULL), col = name_1)) +
+    # annotatios
     annotate("text", x = 2019, y = 840, label = "Industry avg",
              color = "black", hjust = -0.1, vjust = -1.1, size = 4) +
     annotate("text", x = 2019, y = 830, label = "Financial\nSavings",
              color = col, hjust = -0.15, vjust = 0.70, size = 4) +
+    # scales
     scale_color_manual(values = c("dodgerblue4","black")) +
     scale_y_continuous(breaks = seq(700, 900, 20), limits = c(700, 920)) +
     scale_x_continuous(breaks = seq(2012, 2019, 1), 
                        limits = c(2012, 2020)) +
+    # axis titles
     xlab("SURVEY YEAR") + ylab("SATISFACTION SCORE") +
+    # theme 
     theme_void() +
     theme(
       title = element_text(size = 9, color = "gray58"),
@@ -1008,6 +976,7 @@ ex_7_pivot %>%
       axis.title.x = element_text(hjust = 0, color = "gray58", size = 9),
       legend.position = "none"
       ) +
+    # plot title
     annotation_custom(textGrob(
       expression(bold('Financial Savings ')),
       gp = gpar(col = 'dodgerblue4', fontsize = 13), just = "left"
@@ -1032,4 +1001,145 @@ ex_7_pivot %>%
       ),
       xmin = 2012, xmax = 2013, ymin = 920) 
 ```
+
+EXERCISE 8. What’s wrong with this graph?
+
+```{r}
+ex_8 <- read_excel("../data/storytelling_practice/chapter_2/2.8 EXERCISE.xlsx")
+ex_8 %<>% 
+  rename(names_1 = ...1) %>% 
+  mutate(names_1 = factor(names_1, 
+                          labels = c("2014","2015","2016","2017","2018",
+                                     "2019 Q1","2019 Q2","2019 Q3","2019 Q4",
+                                     "Dec-19")))
+```
+
+Initial graph (approx): 
+
+```{r}
+ex_8 %>% 
+  pivot_longer(cols = c(`Loan Loss Reserves`,`NPLs`)) %>% 
+  ggplot(aes(x = names_1)) +
+    geom_col(aes(y = value, fill = name), position = "dodge") +
+    geom_line(aes(y = value, group = name, col = name)) + 
+    scale_y_continuous(labels = dollar)
+```
+
+Improvement of the chart: 
+
+```{r}
+# YEAR PLOTS
+# prepare the table 
+ex_8_pivot_filter <- ex_8 %>% 
+  pivot_longer(cols = c(`Loan Loss Reserves`,`NPLs`)) %>% 
+  filter(names_1 %in% c("2014","2015","2016","2017","2018","Dec-19")) 
+ex_8_pivot_reserves <- filter(ex_8_pivot_filter, name == "Loan Loss Reserves")
+ex_8_pivot_NPLs <- filter(ex_8_pivot_filter, name == "NPLs")
+
+# define colors
+darker_col <- c(col,"red4")
+
+# line plot by years
+line_plot <- ex_8_pivot_filter %>% 
+    ggplot(aes(x = names_1, y = value, group = name, col = name)) +
+    geom_line() +
+    geom_point() +
+    # annotations
+    annotate(geom = "text", x = 1.1, y = ex_8_pivot_reserves$value[1] + 0.175, 
+             label = expression(bold("Reserves")), col = darker_col[1], ) +
+    annotate(geom = "text", x = ex_8_pivot_reserves$names_1,
+             y = ex_8_pivot_reserves$value + 0.1, 
+             label = dollar(ex_8_pivot_reserves$value), 
+             col = darker_col[1]) +
+    annotate(geom = "text", x = 1, y = ex_8_pivot_NPLs$value[1] + 0.075, 
+             label = expression(bold("NPLs")), col = darker_col[2]) +
+    annotate(geom = "text", x = ex_8_pivot_NPLs$names_1,
+             y = ex_8_pivot_NPLs$value - 0.1, 
+             label = dollar(ex_8_pivot_NPLs$value), 
+             col = darker_col[2]) +
+    annotate(geom = "rect", xmin = 5.7, xmax = 6.3, ymin = 0, ymax = 1.8, 
+             alpha = 0.2) +
+    # scales
+    scale_y_continuous(limits = c(0, 1.8)) +
+    scale_color_manual(values = darker_col) +
+    # titles
+    labs(title = "Annual Loan Loss Reserves & Non-Performing Loans (NPLs)", 
+         subtitle = "BILLIONS") +
+    xlab("FISCAL YEAR") +
+    # theme
+    theme_void() +
+    theme(
+      title = element_text(size = 9, color = "black", face = "bold", 
+                           hjust = 1),
+      axis.line.x = element_line(color = "gray58", lineend = "round"),
+      axis.text.x = element_text(size = 9, color = "gray58"),
+      axis.title.x = element_text(hjust = 0, color = "gray58", size = 9),
+      legend.position = "none", 
+      plot.margin = unit(c(0,0.5,0,0), units = "cm")
+      )
+
+# QUARTER PLOT
+# prepare the data
+ex_8_Q <- ex_8 %>% 
+  filter(names_1 %in% c("2019 Q1","2019 Q2","2019 Q3","2019 Q4")) %>%
+  pivot_longer(cols = c(`Loan Loss Reserves`,`NPLs`)) %>% 
+  mutate(names_1 = str_sub(string = names_1, start = 6, end = 8))
+ex_8_Q_reserves <- filter(ex_8_Q, name == "Loan Loss Reserves")
+ex_8_Q_NPLs <- filter(ex_8_Q, name == "NPLs")
+
+# line plot by years
+Q_plot <- ex_8_Q %>% 
+    ggplot(aes(x = names_1, y = value, group = name, col = name)) +
+    geom_line() +
+    geom_point() +
+    # annotations
+    annotate(geom = "text", x = ex_8_Q_reserves$names_1,
+             y = ex_8_Q_reserves$value + 0.1, 
+             label = dollar(ex_8_Q_reserves$value), 
+             col = darker_col[1], size = 3) +
+    annotate(geom = "text", x = ex_8_Q_NPLs$names_1,
+             y = ex_8_Q_NPLs$value - 0.1, 
+             label = dollar(ex_8_Q_NPLs$value), 
+             col = darker_col[2], size = 3) +
+    annotate(geom = "rect", xmin = 0.5, xmax = 4.5, ymin = 0, ymax = 1.8, 
+             alpha = 0.2) +
+    # scales
+    scale_y_continuous(limits = c(0, 1.8)) +
+    scale_color_manual(values = darker_col) +
+    # titles
+    labs(title = "2019 quarterly view", 
+         subtitle = "BILLIONS") +
+    xlab("2019") +
+    # theme
+    theme_void() +
+    theme(
+      title = element_text(size = 9, color = "black", face = "bold", 
+                           hjust = 1),
+      axis.line.x = element_line(color = "gray58"),
+      axis.text.x = element_text(size = 9, color = "gray58"),
+      axis.title.x = element_text(hjust = 0, color = "gray58", size = 9),
+      legend.position = "none"
+      )
+
+# JOIN CHARTS
+grid.arrange(line_plot, Q_plot, widths = c(4,1), nrow = 1)
+```
+
+## CHAPTER 3
+
+```{r}
+ex_1 <- read_excel("../data/storytelling_practice/chapter_3/ex_1.xlsx")
+```
+
+Transform the data: 
+
+```{r}
+ex_1 %<>% 
+  mutate(MONTH = factor(MONTH, 
+                        levels = c("JAN","FEB","MAR","APR","MAY","JUN","JUL",
+                                   "AUG","SEP","OCT","NOV","DEC")))
+```
+
+Create the plot: 
+
 
