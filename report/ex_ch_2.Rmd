@@ -10,13 +10,13 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = F, warning = F, 
-                      fig.align = "center", cache = T)
+                      fig.align = "center")
 # libraries
 if (require(pacman) == FALSE) {
   install.packages("pacman")
 }
-pacman::p_load(tidyverse, scales, lubridate, readxl, 
-               kableExtra, knitr, formattable, gridExtra)
+pacman::p_load(tidyverse, scales, lubridate, readxl, magrittr, dplyr,
+               kableExtra, knitr, formattable, gridExtra, grid)
 ```
 
 ## CHAPTER 2
@@ -663,14 +663,6 @@ ex_3_2019 %>%
     geom_line(aes(group = MONTH), size = 10, color = "gray58") +
     geom_point(aes(color = names, group = names), size = 10, shape = 21, fill = "white") + 
     geom_text(aes(label = round(values/1000), color = names)) +
-  
-    # geom_text(aes(label = if_else(
-    #   MONTH == "2020-03" & names == "DEMAND", values, NULL)
-    #   ), 
-    #   col = used_colors[2], hjust = 0.5, vjust = -0.5) +
-    # geom_text(aes(label = if_else(
-    #   MONTH == "2020-03" & names == "CAPACITY", values, NULL)), 
-    #   col = used_colors[1], hjust = 0.5, vjust = 1.5) +
     scale_color_manual(values = used_colors) + 
     scale_y_continuous(labels = scales::number_format(big.mark = "."), 
                        breaks = seq(0, max(ex_3_2019$values),5000), 
@@ -1128,18 +1120,112 @@ grid.arrange(line_plot, Q_plot, widths = c(4,1), nrow = 1)
 ## CHAPTER 3
 
 ```{r}
-ex_1 <- read_excel("../data/storytelling_practice/chapter_3/ex_1.xlsx")
+ex_3_1 <- read_excel("../data/storytelling_practice/chapter_3/ex_1.xlsx")
 ```
 
 Transform the data: 
 
 ```{r}
-ex_1 %<>% 
+# add factors
+ex_3_1 %<>% 
   mutate(MONTH = factor(MONTH, 
                         levels = c("JAN","FEB","MAR","APR","MAY","JUN","JUL",
-                                   "AUG","SEP","OCT","NOV","DEC")))
+                                   "AUG","SEP","OCT","NOV","DEC")),
+         REL_SALES = if_else(RELEVANT == 1, SALES, NULL), 
+         DATE = as_date(DATE)) 
 ```
 
-Create the plot: 
+Create the line chart:
 
+```{r}
+ex_3_1 %>% 
+  ggplot(aes(x = DATE)) +
+    # geometries
+    geom_line(aes(y = if_else(ORIGIN == "ACTUAL" |
+                                (YEAR == 2019 & MONTH == "JUN"), 
+                              SALES, NULL)), size = 1) +
+    geom_line(aes(y = if_else(ORIGIN == "FORECAST", SALES, NULL)), 
+              linetype = "dashed", size = 1) +
+    geom_point(aes(y = REL_SALES), size = 3) +
+    geom_point(aes(y = if_else(MONTH == "JUL" & YEAR == 2018, SALES, NULL)), 
+               shape = 21, fill = "darkorange", size = 3) + 
+    geom_point(aes(y = if_else(MONTH == "FEB" & YEAR == 2019, SALES, NULL)), 
+               shape = 21, fill = col, size = 3) + 
+    geom_text(aes(y = SALES, label = dollar(round(REL_SALES,1), 
+                                 suffix = "B", accuracy = 0.1)), 
+              vjust = -1.5, hjust = 0.2, size = 3) +
+    # annotations
+      # square text
+    annotate(geom = "rect", xmin = as_date("2019-05-20"), 
+             xmax = as_date("2020-01-10"), ymin = 0, ymax = 2.6, 
+             alpha = 0.1) + 
+    annotate(geom = "text",
+             x = as_date("2020-01-01"), y = 1, hjust = 1, vjust = -1,
+             label = expression(bold("2019 FORECAST")), 
+             col = "gray60", size = 3.25) +
+    annotate(geom = "text",
+             x = as_date("2020-01-01"), y = 1, hjust = 1, vjust = 1,
+             label = paste0("This is provided by ABC\n",
+                              "consultants and based on\n",
+                              "market data through June.\n",
+                              "The forecast assumes no\n",
+                              "major market changes.\n"), 
+             col = "gray60", size = 3.5) +
+      # 2018 notes
+    annotate(
+      geom = "text", x = as_date("2018-01-10"), y = 3.5, hjust = 0, vjust = 1,
+      label = paste0("2018: Jan-Jun was a period of stability, with\n",
+                     "fairly steady growth (averaging +3% per\n",
+                     "month). There was a nearly 20% decrease\n", 
+                     "in July, when Product X was recalled and\n", 
+                     "pulled from the market. Total sales remained\n", 
+                     "at reduced volume for the rest of the year."),
+      col = "gray60", size = 3.5) +   
+    annotate(
+      geom = "text", x = as_date("2018-01-10"), y = 3.5, hjust = 0, vjust = 1,
+      label = expression(bold("2018:")),
+      col = "gray60", size = 3.5) +
+    annotate(
+      geom = "text", x = as_date("2018-01-10"), y = 3.188, hjust = 0, vjust = 1,
+      label = expression(phantom("month). There was a ")*
+                           "nearly 20% decrease"),
+      size = 3.5, col = "darkorange") +
+    annotate(
+      geom = "text", x = as_date("2018-01-10"), y = 3.028, hjust = 0, vjust = 1,
+      label = "in July",
+      size = 3.5, col = "darkorange") +
+      # 2019 notes
+    annotate(
+      geom = "text", x = as_date("2019-01-10"), y = 3.5, hjust = 0, vjust = 1,
+      label = paste0("2019: The year started at less than $1.6B, but\n",
+                     "Increased markedly in February, when a new\n",
+                     "study was released. Total sales have increased\n", 
+                     "steadly since then and this projected to continue.\n", 
+                     "The latest forecast is for $2.4B in monthly sales by\n", 
+                     "the end of the year."),
+      col = "gray60", size = 3.5) +
+    annotate(
+      geom = "text", x = as_date("2019-01-10"), y = 3.5, hjust = 0, vjust = 1,
+      label = expression(bold("2019:")),
+      col = "gray60", size = 3.5) +
+    annotate(
+      geom = "text", x = as_date("2019-01-10"), y = 3.345, hjust = 0, vjust = 1,
+      label = "Increased markedly in February",
+      size = 3.5, col = col) +
+    # scales
+    scale_x_date(date_labels = "%b'%y", date_breaks = "3 month") +
+    scale_y_continuous(labels = dollar, breaks = c(seq(0,3.5,0.5)), 
+                       limits = c(0, 3.5)) +
+    # titles
+    labs("Market size over time") +
+    ylab("SALES ($USD BILLIONS)") +
+    # themes
+    theme_void() +
+    theme(
+      axis.line.x = element_line(color = "gray58"),
+      axis.text.y = element_text(size = 11, color = "gray58"),
+      axis.title.y = element_text(hjust = 1, color = "gray58"),
+      axis.text.x = element_text(size = 9, color = "gray58")
+    )
+```
 

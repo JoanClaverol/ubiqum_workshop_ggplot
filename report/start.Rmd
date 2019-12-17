@@ -1,0 +1,138 @@
+---
+title: "Untitled"
+author: "Joan Claverol Romero"
+date: "17/12/2019"
+output: powerpoint_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = F, message = F)
+if (require(pacman) == FALSE) {
+  install.packages("pacman")
+}
+pacman::p_load(tidyverse, scales, lubridate, readxl, magrittr, dplyr, ggplot2,
+               kableExtra, knitr, formattable, gridExtra, grid)
+```
+
+## Slide 1
+
+```{r}
+ex_8 <- read_excel("../data/storytelling_practice/chapter_2/2.8 EXERCISE.xlsx")
+ex_8 %<>% 
+  rename(names_1 = ...1) %>% 
+  mutate(names_1 = factor(names_1, 
+                          labels = c("2014","2015","2016","2017","2018",
+                                     "2019 Q1","2019 Q2","2019 Q3","2019 Q4",
+                                     "Dec-19")))
+```
+
+## Slide 2
+
+```{r}
+ex_8 %>% 
+  pivot_longer(cols = c(`Loan Loss Reserves`,`NPLs`)) %>% 
+  ggplot(aes(x = names_1)) +
+    geom_col(aes(y = value, fill = name), position = "dodge") +
+    geom_line(aes(y = value, group = name, col = name)) + 
+    scale_y_continuous(labels = dollar)
+```
+
+## Slide 3
+
+```{r}
+# YEAR PLOTS
+# prepare the table 
+ex_8_pivot_filter <- ex_8 %>% 
+  pivot_longer(cols = c(`Loan Loss Reserves`,`NPLs`)) %>% 
+  filter(names_1 %in% c("2014","2015","2016","2017","2018","Dec-19")) 
+ex_8_pivot_reserves <- filter(ex_8_pivot_filter, name == "Loan Loss Reserves")
+ex_8_pivot_NPLs <- filter(ex_8_pivot_filter, name == "NPLs")
+
+# define colors
+darker_col <- c("dodgerblue4","red4")
+
+# line plot by years
+line_plot <- ex_8_pivot_filter %>% 
+    ggplot(aes(x = names_1, y = value, group = name, col = name)) +
+    geom_line() +
+    geom_point() +
+    # annotations
+    annotate(geom = "text", x = 1.1, y = ex_8_pivot_reserves$value[1] + 0.175, 
+             label = expression(bold("Reserves")), col = darker_col[1], ) +
+    annotate(geom = "text", x = ex_8_pivot_reserves$names_1,
+             y = ex_8_pivot_reserves$value + 0.1, 
+             label = dollar(ex_8_pivot_reserves$value), 
+             col = darker_col[1]) +
+    annotate(geom = "text", x = 1, y = ex_8_pivot_NPLs$value[1] + 0.075, 
+             label = expression(bold("NPLs")), col = darker_col[2]) +
+    annotate(geom = "text", x = ex_8_pivot_NPLs$names_1,
+             y = ex_8_pivot_NPLs$value - 0.1, 
+             label = dollar(ex_8_pivot_NPLs$value), 
+             col = darker_col[2]) +
+    annotate(geom = "rect", xmin = 5.7, xmax = 6.3, ymin = 0, ymax = 1.8, 
+             alpha = 0.2) +
+    # scales
+    scale_y_continuous(limits = c(0, 1.8)) +
+    scale_color_manual(values = darker_col) +
+    # titles
+    labs(title = "Annual Loan Loss Reserves & Non-Performing Loans (NPLs)", 
+         subtitle = "BILLIONS") +
+    xlab("FISCAL YEAR") +
+    # theme
+    theme_void() +
+    theme(
+      title = element_text(size = 9, color = "black", face = "bold", 
+                           hjust = 1),
+      axis.line.x = element_line(color = "gray58", lineend = "round"),
+      axis.text.x = element_text(size = 9, color = "gray58"),
+      axis.title.x = element_text(hjust = 0, color = "gray58", size = 9),
+      legend.position = "none", 
+      plot.margin = unit(c(0,0.5,0,0), units = "cm")
+      )
+
+# QUARTER PLOT
+# prepare the data
+ex_8_Q <- ex_8 %>% 
+  filter(names_1 %in% c("2019 Q1","2019 Q2","2019 Q3","2019 Q4")) %>%
+  pivot_longer(cols = c(`Loan Loss Reserves`,`NPLs`)) %>% 
+  mutate(names_1 = str_sub(string = names_1, start = 6, end = 8))
+ex_8_Q_reserves <- filter(ex_8_Q, name == "Loan Loss Reserves")
+ex_8_Q_NPLs <- filter(ex_8_Q, name == "NPLs")
+
+# line plot by years
+Q_plot <- ex_8_Q %>% 
+    ggplot(aes(x = names_1, y = value, group = name, col = name)) +
+    geom_line() +
+    geom_point() +
+    # annotations
+    annotate(geom = "text", x = ex_8_Q_reserves$names_1,
+             y = ex_8_Q_reserves$value + 0.1, 
+             label = dollar(ex_8_Q_reserves$value), 
+             col = darker_col[1], size = 3) +
+    annotate(geom = "text", x = ex_8_Q_NPLs$names_1,
+             y = ex_8_Q_NPLs$value - 0.1, 
+             label = dollar(ex_8_Q_NPLs$value), 
+             col = darker_col[2], size = 3) +
+    annotate(geom = "rect", xmin = 0.5, xmax = 4.5, ymin = 0, ymax = 1.8, 
+             alpha = 0.2) +
+    # scales
+    scale_y_continuous(limits = c(0, 1.8)) +
+    scale_color_manual(values = darker_col) +
+    # titles
+    labs(title = "2019 quarterly view", 
+         subtitle = "BILLIONS") +
+    xlab("2019") +
+    # theme
+    theme_void() +
+    theme(
+      title = element_text(size = 9, color = "black", face = "bold", 
+                           hjust = 1),
+      axis.line.x = element_line(color = "gray58"),
+      axis.text.x = element_text(size = 9, color = "gray58"),
+      axis.title.x = element_text(hjust = 0, color = "gray58", size = 9),
+      legend.position = "none"
+      )
+
+# JOIN CHARTS
+grid.arrange(line_plot, Q_plot, widths = c(4,1), nrow = 1)
+```
