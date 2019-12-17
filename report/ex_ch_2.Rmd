@@ -1119,6 +1119,8 @@ grid.arrange(line_plot, Q_plot, widths = c(4,1), nrow = 1)
 
 ## CHAPTER 3
 
+### EXERCICE 1
+
 ```{r}
 ex_3_1 <- read_excel("../data/storytelling_practice/chapter_3/ex_1.xlsx")
 ```
@@ -1186,12 +1188,12 @@ ex_3_1 %>%
       label = expression(bold("2018:")),
       col = "gray60", size = 3.5) +
     annotate(
-      geom = "text", x = as_date("2018-01-10"), y = 3.188, hjust = 0, vjust = 1,
+      geom = "text", x = as_date("2018-01-10"), y = 3.175, hjust = 0, vjust = 1,
       label = expression(phantom("month). There was a ")*
                            "nearly 20% decrease"),
       size = 3.5, col = "darkorange") +
     annotate(
-      geom = "text", x = as_date("2018-01-10"), y = 3.028, hjust = 0, vjust = 1,
+      geom = "text", x = as_date("2018-01-10"), y = 3.0, hjust = 0, vjust = 1,
       label = "in July",
       size = 3.5, col = "darkorange") +
       # 2019 notes
@@ -1209,7 +1211,7 @@ ex_3_1 %>%
       label = expression(bold("2019:")),
       col = "gray60", size = 3.5) +
     annotate(
-      geom = "text", x = as_date("2019-01-10"), y = 3.345, hjust = 0, vjust = 1,
+      geom = "text", x = as_date("2019-01-10"), y = 3.34, hjust = 0, vjust = 1,
       label = "Increased markedly in February",
       size = 3.5, col = col) +
     # scales
@@ -1217,7 +1219,7 @@ ex_3_1 %>%
     scale_y_continuous(labels = dollar, breaks = c(seq(0,3.5,0.5)), 
                        limits = c(0, 3.5)) +
     # titles
-    labs("Market size over time") +
+    labs(title = "Market size over time") +
     ylab("SALES ($USD BILLIONS)") +
     # themes
     theme_void() +
@@ -1229,3 +1231,4 @@ ex_3_1 %>%
     )
 ```
 
+### EXERCISE 2
