@@ -1159,7 +1159,7 @@ ex_3_1 %>%
     # annotations
       # square text
     annotate(geom = "rect", xmin = as_date("2019-05-20"), 
-             xmax = as_date("2020-01-10"), ymin = 0, ymax = 2.6, 
+             xmax = as_date("2020-01-10"), ymin = 0, ymax = 2.55, 
              alpha = 0.1) + 
     annotate(geom = "text",
              x = as_date("2020-01-01"), y = 1, hjust = 1, vjust = -1,
@@ -1232,3 +1232,457 @@ ex_3_1 %>%
 ```
 
 ### EXERCISE 2
+
+```{r}
+ex_3_2 <- read_excel("../data/storytelling_practice/chapter_3/ex_2.xlsx")
+# give format to the data
+ex_3_2 %<>% 
+  mutate(Year_2019 = factor(Year_2019, 
+                        levels = c("JAN","FEB","MAR","APR","MAY","JUN","JUL",
+                                   "AUG","SEP","OCT","NOV","DEC")))
+
+```
+
+Plot evolution to understand the different trends: 
+
+```{r}
+text_col <- "grey58"
+
+ex_3_2 %>% 
+  ggplot(aes(x = Year_2019, y = Rate)) +
+    geom_col(fill = "gray58", col = "gray40", width = 0.8) +
+    scale_y_continuous(labels = percent_format(accuracy = 0.1),
+                       breaks = seq(0, 0.01, 0.001),
+                       limits = c(0, 0.01)) +
+    labs(title = "2019 monthly voluntary attrition rate", 
+         subtitle = "") +
+    ylab("ATTRITION RATE") +
+    xlab("2019") +
+    theme_void() +
+    theme(
+      title = element_text(size = 12, color = "grey20", face = "bold", 
+                           hjust = 1),
+      axis.title.y = element_text(color = text_col, angle = 90, hjust = 1),
+      axis.text.y = element_text(color = text_col),
+      axis.line = element_line(color = text_col), 
+      axis.text = element_text(color = text_col), 
+      axis.title.x = element_text(hjust = 0, color = text_col, size = 12)
+    )
+```
+
+Highlight the relevant parts: 
+
+```{r}
+text_col <- "grey58"
+rel_months <- c("APR", "JUL", "AUG", "NOV", "DEC")
+
+ex_3_2 %>% 
+  ggplot(aes(x = Year_2019, y = Rate)) +
+    geom_col(aes(fill = (Year_2019 %in% rel_months), 
+                 col = (Year_2019 %in% rel_months)),
+             width = 0.8) +
+    scale_y_continuous(labels = percent_format(accuracy = 0.1),
+                       breaks = seq(0, 0.01, 0.001),
+                       limits = c(0, 0.01)) +
+    scale_fill_manual(values = c("grey58", "grey20")) +
+    scale_color_manual(values = c("grey20", "grey58")) + 
+    labs(title = "2019 monthly voluntary attrition rate", 
+         subtitle = "") +
+    ylab("ATTRITION RATE") +
+    xlab("2019") +
+    theme_void() +
+    theme(
+      title = element_text(size = 12, color = "grey20", face = "bold", 
+                           hjust = 1),
+      axis.title.y = element_text(color = text_col, angle = 90, hjust = 1),
+      axis.text.y = element_text(color = text_col),
+      axis.line = element_line(color = text_col), 
+      axis.text = element_text(color = text_col), 
+      axis.title.x = element_text(hjust = 0, color = text_col, size = 12),
+      legend.position = "none"
+    )
+```
+
+```{r}
+text_col <- "grey58"
+rel_months <- c("APR", "JUL", "AUG", "NOV", "DEC")
+
+ex_3_2 %<>% 
+  mutate(Highlight = if_else(
+    Year_2019 %in% c("JUL","AUG"), "Summer", if_else(
+      Year_2019 %in% c("APR"), "April", if_else(
+        Year_2019 %in% c("NOV","DEC"), "Winter","Other"
+        )))
+    )
+
+ex_3_2 %>% 
+  ggplot(aes(x = Year_2019, y = Rate)) +
+    geom_col(aes(fill = Highlight), col = "grey50", width = 0.8) +
+    scale_y_continuous(labels = percent_format(accuracy = 0.1),
+                       breaks = seq(0, 0.01, 0.001),
+                       limits = c(0, 0.01)) +
+    scale_fill_manual(values = c("red","grey58","orange","blue")) +
+    labs(title = "2019 monthly voluntary attrition rate", 
+         subtitle = "") +
+    ylab("ATTRITION RATE") +
+    xlab("2019") +
+    theme_void() +
+    theme(
+      title = element_text(size = 12, color = "grey20", face = "bold", 
+                           hjust = 1),
+      axis.title.y = element_text(color = text_col, angle = 90, hjust = 1),
+      axis.text.y = element_text(color = text_col),
+      axis.line = element_line(color = text_col), 
+      axis.text = element_text(color = text_col), 
+      axis.title.x = element_text(hjust = 0, color = text_col, size = 12),
+      legend.position = "none"
+    )
+```
+
+Define grey areas: 
+
+```{r}
+text_col <- "grey58"
+
+ex_3_2 %>% 
+  ggplot(aes(x = Year_2019, y = Rate)) +
+    geom_col(fill = "gray58", col = "gray40", width = 0.8) +
+    annotate(geom = "rect", 
+             xmin = 3.5, xmax = 13, 
+             ymin = 0.007, ymax = 0.0095, 
+             alpha = 0.3, fill = "grey60") +
+    annotate(geom = "rect", 
+             xmin = 6.5, xmax = 13, 
+             ymin = 0.0025, ymax = 0.0065, 
+             alpha = 0.3, fill = "grey60") +
+    annotate(geom = "rect", 
+             xmin = 10.5, xmax = 13, 
+             ymin = 0, ymax = 0.002, 
+             alpha = 0.3, fill = "grey60") +
+    scale_y_continuous(labels = percent_format(accuracy = 0.1),
+                       breaks = seq(0, 0.01, 0.001),
+                       limits = c(0, 0.01)) +
+    labs(title = "2019 monthly voluntary attrition rate", 
+         subtitle = "") +
+    ylab("ATTRITION RATE") +
+    xlab("2019") +
+    theme_void() +
+    theme(
+      title = element_text(size = 12, color = "grey20", face = "bold", 
+                           hjust = 1),
+      axis.title.y = element_text(color = text_col, angle = 90, hjust = 1),
+      axis.text.y = element_text(color = text_col),
+      axis.line = element_line(color = text_col), 
+      axis.text = element_text(color = text_col), 
+      axis.title.x = element_text(hjust = 0, color = text_col, size = 12),
+      plot.margin = unit(c(0,4,0,0), "cm")
+    )
+```
+
+Other way to higlight specific information: 
+
+```{r}
+text_col <- "grey58"
+
+ex_3_2 %>% 
+  ggplot(aes(x = Year_2019, y = Rate)) +
+    geom_col(fill = "gray58", col = "gray40", width = 0.8) +
+    annotate(geom = "segment", 
+             x = 13, xend = 4.5, 
+             y = 0.0075, yend = 0.0075,
+             alpha = 0.3, fill = "grey60", arrow=arrow()) +
+    annotate(geom = "segment", 
+             x = 13, xend = 8.5, 
+             y = 0.0045, yend = 0.0045,
+             alpha = 0.3, fill = "grey60", arrow=arrow()) +
+    scale_y_continuous(labels = percent_format(accuracy = 0.1),
+                       breaks = seq(0, 0.01, 0.001),
+                       limits = c(0, 0.01)) +
+    labs(title = "2019 monthly voluntary attrition rate", 
+         subtitle = "") +
+    ylab("ATTRITION RATE") +
+    xlab("2019") +
+    theme_void() +
+    theme(
+      title = element_text(size = 12, color = "grey20", face = "bold", 
+                           hjust = 1),
+      axis.title.y = element_text(color = text_col, angle = 90, hjust = 1),
+      axis.text.y = element_text(color = text_col),
+      axis.line = element_line(color = text_col), 
+      axis.text = element_text(color = text_col), 
+      axis.title.x = element_text(hjust = 0, color = text_col, size = 12),
+      plot.margin = unit(c(0,4,0,0), "cm")
+    )
+```
+
+```{r}
+ex_3_2 %>% 
+  ggplot(aes(x = Year_2019, y = Rate)) +
+    geom_col(aes(fill = Highlight), col = "grey50", width = 0.8) +
+    annotate(geom = "rect", 
+             xmin = 3.5, xmax = 13, 
+             ymin = 0.007, ymax = 0.0095, 
+             alpha = 0.3, fill = "grey60") +
+    annotate(geom = "rect", 
+             xmin = 6.5, xmax = 13, 
+             ymin = 0.0025, ymax = 0.0065, 
+             alpha = 0.3, fill = "grey60") +
+    annotate(geom = "rect", 
+             xmin = 10.5, xmax = 13, 
+             ymin = 0, ymax = 0.002, 
+             alpha = 0.3, fill = "grey60") +
+    scale_y_continuous(labels = percent_format(accuracy = 0.1),
+                       breaks = seq(0, 0.01, 0.001),
+                       limits = c(0, 0.01)) +
+    scale_fill_manual(values = c("red","grey58","orange","blue")) +
+    labs(title = "2019 monthly voluntary attrition rate", 
+         subtitle = "") +
+    ylab("ATTRITION RATE") +
+    xlab("2019") +
+    theme_void() +
+    theme(
+      title = element_text(size = 12, color = "grey20", face = "bold", 
+                           hjust = 1),
+      axis.title.y = element_text(color = text_col, angle = 90, hjust = 1),
+      axis.text.y = element_text(color = text_col),
+      axis.line = element_line(color = text_col), 
+      axis.text = element_text(color = text_col), 
+      axis.title.x = element_text(hjust = 0, color = text_col, size = 12),
+      legend.position = "none"
+    )
+```
+
+### EXERCISE 3
+
+Show the best way to plot a promotion: 
+
+```{r}
+ex_3_3 <- read_excel("../data/storytelling_practice/chapter_3/ex_3.xlsx")
+```
+
+Plot the dot plot: 
+
+```{r}
+# give the right shape 
+ex_3_3 %<>% 
+  pivot_longer(c(-PROMO)) %>% 
+  mutate(name = factor(name, levels = c("Repeat_writers_92K", 
+                                        "New_writers_45K"))) 
+
+repeat_ex_3_3 <- ex_3_3 %>% 
+  filter(name == "Repeat_writers_92K")
+new_ex_3_3 <- ex_3_3 %>% 
+  filter(name == "New_writers_45K")
+
+# plot the results
+colors <- c("dodgerblue4", "darkorange2", "grey50")
+
+ex_3_3 %>% 
+  ggplot(aes(x = name, y = value, col = PROMO)) +
+    geom_point() + 
+    geom_line(aes(group = PROMO)) + 
+    annotate("text", x = 0.975, y = repeat_ex_3_3$value, 
+             label = percent(repeat_ex_3_3$value, digits = 0), 
+             col = colors, hjust = 1) + 
+    annotate("text", x = 2.125, y = new_ex_3_3$value, 
+             label = percent(new_ex_3_3$value, digits = 0), 
+             color = colors, hjust = 1) + 
+    annotate("text", x = 1.6, y = repeat_ex_3_3$value, 
+             label = new_ex_3_3$PROMO, 
+             color = colors, hjust = 1) + 
+    scale_color_manual(values = colors) +
+    scale_x_discrete(
+      labels = c("Repeat writers\n92K", "New writers\n45K")
+    ) +
+    labs(title = "Product X writers by promo type", 
+         subtitle = "% OF TOTAL\n") +
+    theme_void() + 
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5, size = 9),
+      legend.position = "none",
+      axis.text.x = element_text(colour = "grey50"),
+      axis.line.x = element_line(colour = "grey50", size = 0.2)
+    )
+```
+
+## CHAPTER 4
+
+### EXERCISE 2
+
+Learn how to put focus on: 
+
+```{r}
+ex_4_2 <- read_excel("../data/storytelling_practice/chapter_4/ex_4_2.xlsx")
+```
+
+Initial chart: 
+
+```{r}
+ex_4_2 %>% 
+  ggplot(aes(x = reorder(Brands, -perc), y = perc)) + 
+    geom_col(fill = "grey65") + 
+    coord_flip() +
+    geom_text(aes(x = reorder(Brands, -perc), y = 0.005, 
+                  label = if_else(perc < 0, Brands, NULL)), 
+              hjust = 0, size = 3, col = "grey65") + 
+    geom_text(aes(x = reorder(Brands, -perc), y = -0.005, 
+                  label = if_else(perc > 0, Brands, NULL)), 
+              hjust = 1, size = 3, col = "grey65") + 
+    scale_y_continuous(labels = percent_format(accuracy = 1), 
+                       breaks = seq(-0.2, 0.2, 0.05), 
+                       limits = c(-0.2, 0.2), 
+                       position = "bottom") +
+    labs(title = "Cat food brands: YoY sales change", 
+         subtitle = "% CHANGE IN VOLUME ($)\n") + 
+    theme_void() + 
+    theme(
+      title = element_text(colour = "grey20"),
+      plot.subtitle = element_text(size = 10),
+      axis.text.x = element_text(colour = "grey65", size = 10), 
+      axis.ticks.x = element_line(linetype = 1, colour = "grey65"), 
+      axis.ticks.length.x = unit(.1, "cm")
+    )
+```
+
+Highlight relevant information: 
+
+```{r}
+ex_4_2 %>% 
+  ggplot(aes(x = reorder(Brands, -perc), y = perc)) + 
+    geom_col(fill = "grey65") + 
+    geom_col(aes(y = if_else(Brands %in% c("Lifestyle", 
+                                           "Diet Lifestyle", 
+                                           "Lifestyle Plus"), 
+                             perc, NULL)), fill = "black") +
+    coord_flip() +
+    geom_text(aes(x = reorder(Brands, -perc), y = 0.005, 
+                  label = if_else(perc < 0, Brands, NULL)), 
+              hjust = 0, size = 3, col = "grey65") + 
+    geom_text(aes(x = reorder(Brands, -perc), y = 0.005, 
+                  label = if_else(perc < 0 & 
+                                    Brands %in% c("Lifestyle", 
+                                                  "Diet Lifestyle", 
+                                                  "Lifestyle Plus"), 
+                                  Brands, NULL)), 
+              hjust = 0, size = 3, col = "black") + 
+    geom_text(aes(x = reorder(Brands, -perc), y = -0.005, 
+                  label = if_else(perc > 0, Brands, NULL)), 
+              hjust = 1, size = 3, col = "grey65") + 
+    scale_y_continuous(labels = percent_format(accuracy = 1), 
+                       breaks = seq(-0.2, 0.2, 0.05), 
+                       limits = c(-0.2, 0.2), 
+                       position = "bottom") +
+    labs(title = "Cat food brands: Lifestyle line brands declined", 
+         subtitle = "YEAR-OVER-YEAR % CHANGE IN SALES VOLUME ($)\n") + 
+    theme_void() + 
+    theme(
+      title = element_text(colour = "grey20"),
+      plot.subtitle = element_text(size = 10),
+      axis.text.x = element_text(colour = "grey65", size = 10), 
+      axis.ticks.x = element_line(linetype = 1, colour = "grey65"), 
+      axis.ticks.length.x = unit(.1, "cm")
+    )
+```
+
+Focus on factors in increasing values: 
+
+```{r}
+rel_brands <- c("Lifestyle", "Diet Lifestyle", "Lifestyle Plus", "Feline Gold", 
+                "Feline Platinum", "Feline Instinct", "Feline Pro", 
+                "Feline Royal", "Feline Focus", "Feline Grain Free", 
+                "Feline Silver")
+
+ex_4_2 %>% 
+  ggplot(aes(x = reorder(Brands, -perc), y = perc)) + 
+    geom_col(fill = "grey65") + 
+    geom_col(aes(y = if_else(Brands %in% rel_brands, 
+                             perc, NULL)), fill = "dodgerblue4") +
+    coord_flip() +
+    geom_text(aes(x = reorder(Brands, -perc), y = 0.005, 
+                  label = if_else(perc < 0, Brands, NULL)), 
+              hjust = 0, size = 3, col = "grey65") + 
+    geom_text(aes(x = reorder(Brands, -perc), y = 0.005, 
+                  label = if_else(Brands %in% c("Lifestyle", 
+                                                "Diet Lifestyle", 
+                                                "Lifestyle Plus"), 
+                                  Brands, NULL)), 
+              hjust = 0, size = 3, col = "dodgerblue4") + 
+    geom_text(aes(x = reorder(Brands, -perc), y = -0.005, 
+                  label = if_else(perc > 0, Brands, NULL)), 
+              hjust = 1, size = 3, col = "grey65") + 
+    geom_text(aes(x = reorder(Brands, -perc), y = -0.005, 
+                  label = if_else(Brands %in% c("Feline Gold", 
+                "Feline Platinum", "Feline Instinct", "Feline Pro", 
+                "Feline Royal", "Feline Focus", "Feline Grain Free", 
+                "Feline Silver"), Brands, NULL)), 
+              hjust = 1, size = 3, col = "dodgerblue4") + 
+    scale_y_continuous(labels = percent_format(accuracy = 1), 
+                       breaks = seq(-0.2, 0.2, 0.05), 
+                       limits = c(-0.2, 0.2), 
+                       position = "bottom") +
+    labs(title = "Cat food brands: Lifestyle line brands declined", 
+         subtitle = "YEAR-OVER-YEAR % CHANGE IN SALES VOLUME ($)\n") + 
+    theme_void() + 
+    theme(
+      title = element_text(colour = "grey20"),
+      plot.subtitle = element_text(size = 10),
+      axis.text.x = element_text(colour = "grey65", size = 10), 
+      axis.ticks.x = element_line(linetype = 1, colour = "grey65"), 
+      axis.ticks.length.x = unit(.1, "cm")
+    )
+```
+
+## CHAPTER 7
+
+### EXERCISE 2
+
+```{r}
+# Load the data
+ex_7_2_perc <- read_excel(
+  "../data/storytelling_practice/chapter_7/ex_7_2.xlsx",
+  sheet = "perc"
+  )
+
+ex_7_2_values <- read_excel(
+  "../data/storytelling_practice/chapter_7/ex_7_2.xlsx",
+  sheet = "values"
+  )
+
+# transform the data 
+ex_7_2_values %<>% 
+  pivot_longer(cols = c(-sales_channel), 
+               names_to = "year", values_to = "units")
+ex_7_2_perc %<>% 
+  pivot_longer(cols = c(-sales_channel), names_to = "year", values_to = "perc")
+```
+
+Total units sold: 
+
+```{r}
+ex_7_2_values_all <- ex_7_2_values %>% 
+  group_by(year) %>% 
+  summarise(units = sum(units))
+ex_7_2_values_all %>% 
+  ggplot(aes(x = year, y = units)) + 
+    geom_line(aes(y = if_else(year != 2020, units, NULL), group = "")) +
+    geom_line(aes(y = if_else(year %in% c(2019, 2020), units, NULL), 
+                  group = ""), linetype = "dashed") +
+    geom_point(aes(y = if_else(!(year %in% c(2013, 2015, 2016, 2020)), units, NULL))) + 
+    geom_point(aes(y = if_else(year == 2020, units, NULL)), 
+               fill = "white", shape = 21, size = 3) +
+    geom_text(aes(y = if_else(!(year %in% c(2013, 2015, 2016)), units, NULL), 
+                  label = dollar(round(units/1000,1),
+                                 suffix = "K", accuracy = 0.1, prefix = "")), 
+              vjust = -2, hjust = 0.5, size = 3.5) +
+    scale_y_continuous(limits = c(0, max(ex_7_2_values_all$units + 1000))) + 
+    labs(title = "Total units sold") + 
+    xlab("FISCAL YEAR") +
+    theme_void() +
+    theme(
+      axis.line.x = element_line(color = "gray58"),
+      axis.text.x = element_text(size = 10, color = "gray58"), 
+      axis.title.x = element_text(hjust = 0, color = "gray58", size = 9)
+    )
+```
+
